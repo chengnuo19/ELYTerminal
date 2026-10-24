@@ -7,7 +7,6 @@ use super::{look::Mark, *};
 /// Her, `mood` since `since`, come long before.
 fn ely(mood: Mood, since: Instant) -> Pet {
     Pet {
-        rig: Rc::new(Rig::new()),
         mood,
         since,
         shown: since - Duration::from_secs(60),
@@ -114,4 +113,19 @@ fn she_holds_the_edge_of_any_pane_where_a_drag_left_her() {
         0.0,
         "narrower than she is, she stands at its left"
     );
+}
+
+#[test]
+fn every_act_has_a_gif() {
+    for act in [
+        Act::Calm,
+        Act::Doze,
+        Act::Cheer,
+        Act::Work,
+        Act::Wait,
+        Act::Fret,
+        Act::Wink,
+    ] {
+        gif(act);
+    }
 }

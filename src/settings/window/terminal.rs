@@ -116,8 +116,8 @@ impl SettingsWindow {
         let section = section
             .row(SettingsRow::new("Copy on select").control(copy))
             .row(
-                SettingsRow::new("Ely")
-                    .description("Peeks over the window, her face as your sessions are")
+                SettingsRow::new("Clawd")
+                    .description("Peeks over the window, acting as your sessions are")
                     .control(ely),
             )
             .row(

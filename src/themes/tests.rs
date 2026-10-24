@@ -15,11 +15,11 @@ fn rgb(hex: u32) -> Hsla {
 
 #[test]
 fn every_bundled_file_parses_with_unique_ids() {
-    assert_eq!(all().len(), 14);
+    assert_eq!(all().len(), 15);
     let mut ids: Vec<_> = all().iter().map(|theme| theme.id).collect();
     ids.sort();
     ids.dedup();
-    assert_eq!(ids.len(), 14);
+    assert_eq!(ids.len(), 15);
     let folder = concat!(env!("CARGO_MANIFEST_DIR"), "/assets/themes");
     for entry in std::fs::read_dir(folder).expect("themes folder") {
         let name = entry
@@ -42,6 +42,16 @@ fn catppuccin_mocha_reads_its_upstream_colors() {
     assert_eq!(mocha.ansi[1], rgb(0xf38ba8));
     assert_eq!(mocha.ansi[15], rgb(0xa6adc8));
     assert_eq!(mocha.selection_foreground, Some(rgb(0x1e1e2e)));
+}
+
+#[test]
+fn clawd_is_the_default_with_an_orange_accent() {
+    assert_eq!(default_id(), "clawd");
+    let clawd = find("clawd").expect("clawd");
+    assert_eq!(clawd.background, rgb(0x000000));
+    assert_eq!(clawd.accent, Some(rgb(0xde886d)));
+    assert_eq!(palette(clawd, 1.0).accent, rgb(0xde886d));
+    assert_eq!(find("nord").expect("nord").accent, None);
 }
 
 #[test]

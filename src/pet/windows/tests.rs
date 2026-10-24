@@ -220,11 +220,11 @@ fn placing_her_across_two_displays_of_two_dpis_settles() {
     );
     // One over the other, 144 DPI above 96: her 96 DPI box, her bottom 50 pixels down the second.
     let down = displays(true, 144, 96);
-    let start = (rect(200, 300, 312, 423), 96);
+    let start = (rect(200, 300, 324, 426), 96);
     let ((at, dpi), changes) = drain(start, &[(200, 50)], &down);
     assert_eq!(
         (changes, dpi, at.left, at.bottom, at.bottom - at.top),
-        (1, 144, 200, 50, 185),
+        (1, 144, 200, 50, 189),
         "her corner kept on the edge"
     );
 }

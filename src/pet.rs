@@ -1,9 +1,8 @@
-//! Ely, the icon's girl, peeking over the main window's top edge from a window of her own, or up from its bottom edge where no room lies above.
+//! Clawd, the pixel crab, peeking over the main window's top edge from a window of her own, or up from its bottom edge where no room lies above.
 
 mod look;
 #[cfg(target_os = "macos")]
 mod macos;
-mod rig;
 #[cfg(test)]
 mod tests;
 #[cfg(windows)]
@@ -14,32 +13,57 @@ mod x11;
 use std::{
     cell::RefCell,
     rc::Rc,
+    sync::{Arc, LazyLock},
     time::{Duration, Instant},
 };
 
 use gpui::{
-    App, AppContext as _, Bounds, Context, Decorations, DispatchPhase, InteractiveElement,
-    IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent, ParentElement, Pixels,
-    Point, Render, Styled, Subscription, Window, WindowBackgroundAppearance, WindowBounds,
-    WindowHandle, WindowKind, WindowOptions, canvas, div, point, popup, px, size,
+    App, AppContext as _, Bounds, Context, Decorations, DispatchPhase, Image, ImageFormat,
+    InteractiveElement, IntoElement, MouseButton, MouseDownEvent, MouseMoveEvent, MouseUpEvent,
+    ParentElement, Pixels, Point, Render, Styled, Subscription, Window, WindowBackgroundAppearance,
+    WindowBounds, WindowHandle, WindowKind, WindowOptions, canvas, div, img, point, popup, px,
+    size,
 };
 
+use self::look::{Act, EASE, Mood, Pose, blend, mood, pose};
 #[cfg(target_os = "macos")]
 use self::macos as platform;
 #[cfg(windows)]
 use self::windows as platform;
 #[cfg(target_os = "linux")]
 use self::x11 as platform;
-use self::{
-    look::{Act, EASE, Mood, Pose, blend, mood, pose},
-    rig::Rig,
-};
 use crate::{settings::SettingsStore, workspace::Workspace};
 
-/// Her head's box, in points, and the room above it her hops take.
-const WIDTH: f32 = 112.0;
-const HEAD: f32 = 107.4;
+/// Her box, in points, as wide and tall as her 198 by 176 GIFs, and the room above it her hops take.
+const WIDTH: f32 = 124.0;
+const HEAD: f32 = 110.0;
 const ROOM: f32 = 16.0;
+
+/// Clawd's GIF for each act.
+const GIFS: [(Act, &[u8]); 7] = [
+    (Act::Calm, include_bytes!("../assets/pet/idle.gif")),
+    (Act::Doze, include_bytes!("../assets/pet/sleeping.gif")),
+    (Act::Cheer, include_bytes!("../assets/pet/happy.gif")),
+    (Act::Work, include_bytes!("../assets/pet/typing.gif")),
+    (Act::Wait, include_bytes!("../assets/pet/notification.gif")),
+    (Act::Fret, include_bytes!("../assets/pet/error.gif")),
+    (
+        Act::Wink,
+        include_bytes!("../assets/pet/react-double-jump.gif"),
+    ),
+];
+
+/// The GIF she plays for `act`.
+fn gif(act: Act) -> Arc<Image> {
+    static IMAGES: LazyLock<Vec<Arc<Image>>> = LazyLock::new(|| {
+        GIFS.iter()
+            .map(|(_, bytes)| Arc::new(Image::from_bytes(ImageFormat::Gif, bytes.to_vec())))
+            .collect()
+    });
+    let index = GIFS.iter().position(|(each, _)| *each == act);
+    IMAGES[index.expect("every act has a GIF")].clone()
+}
+
 /// How often she checks her Wayland anchor against the main window.
 const CHECK: Duration = Duration::from_millis(500);
 
@@ -55,7 +79,6 @@ type Shown = Rc<RefCell<Option<WindowHandle<Pet>>>>;
 
 /// Ely in her window: she moves all the time, her acts follow the sessions' marks, and a press pets her.
 pub struct Pet {
-    rig: Rc<Rig>,
     mood: Mood,
     /// When the mood began, when she came, and when she was last pressed.
     since: Instant,
@@ -248,7 +271,6 @@ fn show(main: WindowHandle<Workspace>, cx: &mut App) -> anyhow::Result<WindowHan
                 }
             });
             Pet {
-                rig: Rc::new(Rig::new()),
                 mood: start,
                 since: Instant::now(),
                 shown: Instant::now(),
@@ -460,13 +482,10 @@ impl Render for Pet {
         let pose = self.pose(Instant::now());
         // gpui gives a hidden window no frames, so she rests while unseen.
         window.request_animation_frame();
-        let rig = self.rig.clone();
         let this = cx.entity();
         let drawn = canvas(
             |_, _, _| {},
-            move |bounds, _, window, cx| {
-                let head = point(bounds.origin.x, bounds.origin.y + px(ROOM));
-                rig.paint(head, &pose, window, cx);
+            move |_, _, window, _| {
                 // Her window keeps the pointer while the button is held, inside it or not.
                 let held = this.clone();
                 window.on_mouse_event(move |event: &MouseMoveEvent, phase, window, cx| {
@@ -482,13 +501,25 @@ impl Render for Pet {
                 });
             },
         );
-        div().size_full().child(drawn.size_full()).on_mouse_down(
-            MouseButton::Left,
-            cx.listener(|pet, event: &MouseDownEvent, window, cx| {
-                pet.press(Instant::now());
-                pet.grab(event.position.x, window.scale_factor());
-                cx.notify();
-            }),
-        )
+        let clawd = img(gif(pose.act))
+            .id("clawd")
+            .absolute()
+            .left_0()
+            .bottom_0()
+            .w(px(WIDTH))
+            .h(px(HEAD));
+        div()
+            .size_full()
+            .relative()
+            .child(drawn.size_full())
+            .child(clawd)
+            .on_mouse_down(
+                MouseButton::Left,
+                cx.listener(|pet, event: &MouseDownEvent, window, cx| {
+                    pet.press(Instant::now());
+                    pet.grab(event.position.x, window.scale_factor());
+                    cx.notify();
+                }),
+            )
     }
 }

@@ -91,6 +91,8 @@ pub enum Mark {
 }
 
 /// How a mark moves from its place: by `at` units, grown by `scale`, turned `turn` degrees, at `alpha`.
+// Ely's rig drew marks with these; Clawd's GIFs do not, though the poses still ease them.
+#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct Motion {
     pub at: (f32, f32),

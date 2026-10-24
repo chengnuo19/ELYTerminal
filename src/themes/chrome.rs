@@ -33,10 +33,12 @@ pub fn palette(theme: &TerminalTheme, opacity: f32) -> Palette {
         fg_muted: tint(0.8),
         fg_subtle: tint(0.62),
         fg_disabled: tint(0.36),
-        accent: fg,
-        accent_hover: tint(0.85),
+        accent: theme.accent.unwrap_or(fg),
+        accent_hover: theme
+            .accent
+            .map_or(tint(0.85), |accent| accent.mix(&fg, 0.2)),
         on_accent: bg,
-        focus: ansi[4],
+        focus: theme.accent.unwrap_or(ansi[4]),
         link: ansi[12],
         selection: theme.selection_background.alpha(0.4),
         success: ansi[2],

@@ -25,6 +25,8 @@ pub struct TerminalTheme {
     /// None keeps each cell's own color.
     pub selection_foreground: Option<Hsla>,
     pub ansi: [Hsla; 16],
+    /// The chrome's accent; none keeps the foreground.
+    pub accent: Option<Hsla>,
     pub ely: bool,
 }
 
@@ -43,7 +45,8 @@ pub struct Omarchy(pub TerminalTheme);
 impl Global for Omarchy {}
 
 /// Upstream Ghostty files from iTerm2-Color-Schemes: id, shown name, text.
-const FILES: [(&str, &str, &str); 12] = [
+const FILES: [(&str, &str, &str); 13] = [
+    ("clawd", "Clawd", include_str!("../../assets/themes/clawd")),
     (
         "catppuccin-mocha",
         "Catppuccin Mocha",
@@ -133,7 +136,7 @@ pub fn default_id() -> &'static str {
     if omarchy::path().is_some_and(|path| !matches!(path.try_exists(), Ok(false))) {
         return OMARCHY;
     }
-    "catppuccin-mocha"
+    "clawd"
 }
 
 /// The theme the settings choose under the system's appearance.
@@ -170,6 +173,7 @@ fn ely(id: &'static str, name: &'static str, palette: Palette) -> TerminalTheme 
         selection_background: palette.selection,
         selection_foreground: None,
         ansi: palette.ansi,
+        accent: None,
         ely: true,
     }
 }
@@ -214,6 +218,7 @@ fn parse(id: &'static str, name: &'static str, text: &str) -> anyhow::Result<Ter
         selection_background: get("selection-background")?,
         selection_foreground: Some(get("selection-foreground")?),
         ansi: colors,
+        accent: get("accent").ok(),
         ely: false,
     })
 }
